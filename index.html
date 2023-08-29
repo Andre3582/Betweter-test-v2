@@ -20,11 +20,11 @@
 
     <link href="https://unpkg.com/jspsych@7.3.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     <style>
-      body {background-color: #ffcd00; color: rgb(0, 0, 0);}
+      body {background-color: #ffffff; color: rgb(0, 0, 0);}
     </style>
   </head>
   <body></body>
-  <script>
+   <script>
 
     // Set the canvas size in pixel
     const canvas_width_px = 1200;
@@ -55,27 +55,33 @@
       }
     });
 
-    
 
-    
     let message1 = {
-      type: jsPsychHtmlButtonResponse,
-      stimulus: "Welcome to the experiment. Click below to practice.",
+      type: jsPsychImageButtonResponse,
+      stimulus: "Instructions copy task at Betweter.png",
+      stimulus_width: 1200,
+      prompt: "<h3>Welcome to the experiment. This is what you need to do.</h3><h3>If you get it, click \"GO!\" to practice.</h3>",
       choices:['GO!'],
-      css_classes: ['trial_background']
+      // button_html: '<button class="jspsych-btn" style = "fontsize:30">%choice%</button>',
     };
 
     let message2 = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: "Perfect! But can you do it in the dark as well?",
+      stimulus: "Perfect! Let's make it a little harder.",
       choices:['GO!']
     };
 
 
     let message3 = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: "Great! Now you are ready for the real deal.\nThere will be 5 puzzles.\nGood luck!",
-      choices:['GO!']
+      // stimulus: "Great! Now you are ready for the real deal.\nThere will be 5 puzzles.\nGood luck!",
+      stimulus: function(){
+        let pervious_completion_time = jsPsych.data.get().last().select('rt').mean()/1000;
+        return "<h3>Well done! You finished this last round in "+pervious_completion_time.toFixed(2)+" seconds. Not bad, but can you do better?</h3>" +
+               "<h3>You are now ready for the real deal! There will be 5 puzzles. Will you be the fastest?</h3>"
+      },
+      choices:['GO!'],
+      // button_html: '<button class="jspsych-btn">%choice%</button>',
     };
 
     let message4 = {
@@ -102,10 +108,10 @@
     let survey = {
       type: jsPsychSurveyText,
       questions: [
-        {prompt: 'Enter a nickname:', placeholder: '...', rows:1, columns: 50}
+        {prompt: 'Enter a nickname for the Leaderboards:', placeholder: '...', rows:1, columns: 50}
       ],
       on_finish: function(data){
-        console.log( data.response.Q0)
+        // console.log( data.response.Q0)
         let nickname = data.response.Q0;
         let randid = jsPsych.randomization.randomID(15);;
         let filename = nickname + '_' + randid + '.csv'
@@ -213,10 +219,10 @@
     }
   
 
-    let createCopyTaskTrial = function(test_or_practice){
+    let createCopyTaskTrial = function(test_or_practice, enable_covers, prompt){
       let n_rows = 4
       let n_cols = 4
-      let n_model_items = 1
+      let n_model_items = 2
       let resource_grid_contents = createResourceGrid(n_rows, n_cols)
       let model_grid_contents = createModelGrid(resource_grid_contents, n_rows, n_cols, n_model_items)
 
@@ -225,12 +231,13 @@
           type: jsPsychCopyingTask,
           model_grid_contents: model_grid_contents,
           resource_grid_contents: resource_grid_contents,
+          prompt: prompt,
           item_file_type:'svg_path',                       // NOTE THIS PARAMETER
           data: { 
             trial_label: 'copying_task',
             test_or_practice: test_or_practice,
           },
-          css_classes: ['trial_background']
+          enable_covers: enable_covers,
       }
       return copying_task
     }
@@ -251,22 +258,22 @@
     const timeline = [];
     timeline.push(survey);
     timeline.push(message1);
-    timeline.push( createCopyTaskTrial('practice') );
-    // timeline.push(message2);
-    // timeline.push(createCopyTaskTrial('practice'));
-    // timeline.push(message3)
+    timeline.push( createCopyTaskTrial('practice', false, '') );
+    timeline.push(message2);
+    timeline.push(createCopyTaskTrial('practice', true, ''));
+    timeline.push(message3)
 
-    // timeline.push(createCopyTaskTrial('test')); // 1
-    // timeline.push(message4)
-    // timeline.push(createCopyTaskTrial('test')); // 2
-    // timeline.push(message4)
-    // timeline.push(createCopyTaskTrial('test')); // 3
-    // timeline.push(message4)
-    // timeline.push(createCopyTaskTrial('test')); // 4
-    // timeline.push(message4)
-    // timeline.push(createCopyTaskTrial('test'));// 5
-    // timeline.push(message5)
-    timeline.push(save_data)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 1</h3>')); // 1
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 2</h3>')); // 2
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 3</h3>')); // 3
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 4</h3>')); // 4
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 5</h3>'));// 5
+    timeline.push(message5)
+    // timeline.push(save_data)
 
     /*start experiment*/
     jsPsych.run(timeline);
