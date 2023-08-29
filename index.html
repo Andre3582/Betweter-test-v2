@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Copying Task</title>
-    <script src="https://unpkg.com/jspsych@7.3.0"></script>
+    <title>Copying Task at Betweter</title>
+    <script src="https://unpkg.com/jspsych@7.3.3"></script>
 
 
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.0"></script>    
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.3.0"></script>
     
-    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-image-button-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-html-button-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-survey-text"></script>
+    <script src="plugin-copying-task.js"></script> <!-- local file! -->
     
-    <script src="https://unpkg.com/@jspsych/plugin--preload"></script>
-    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
-    
-    <script src="plugin-copying-task.js"></script>
-
     <script src="https://unpkg.com/fabric@5.2.4/dist/fabric.js"></script>
 
-    <link href="https://unpkg.com/jspsych@7.3.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     <style>
       body {background-color: #ffffff; color: rgb(0, 0, 0);}
     </style>
+
   </head>
   <body></body>
-   <script>
+  <script>
 
     // Set the canvas size in pixel
     const canvas_width_px = 1200;
@@ -38,6 +38,8 @@
     // Set the desired physical size of the canvas width
     const canvas_width_cm = 25;
 
+    const button_format = '<button class="jspsych-btn" style = "font-size:30px; padding: 3px 20px; background-color:rgb(240,240,240)">%choice%</button>'
+
 
 
     const jsPsych = initJsPsych({
@@ -50,25 +52,47 @@
 
         // jsPsych.data.addProperties({subject: randid})
         let filename = jsPsych.data.get().select('filename').values[0]
-        jsPsych.data.get().localSave('csv', filename)
+        // jsPsych.data.get().localSave('csv', filename)
         jsPsych.data.displayData();
       }
     });
+
+    let preload_trial = {
+      type: jsPsychPreload,
+      images:['Instructions copy task at Betweter.png'],
+    };
+
+    let enter_fullscreen = {
+      type: jsPsychFullscreen,
+      message: "<h2>We need to switch to FULLSCREEN before we begin.</h2>",
+      fullscreen_mode: true,
+      delay_after:0,
+      button_label: "Switch to FULLSCREEN",
+      trial_duration:10,
+    };
+
+    let exit_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: false,
+      delay_after: 0
+    }
+
 
 
     let message1 = {
       type: jsPsychImageButtonResponse,
       stimulus: "Instructions copy task at Betweter.png",
       stimulus_width: 1200,
-      prompt: "<h3>Welcome to the experiment. This is what you need to do.</h3><h3>If you get it, click \"GO!\" to practice.</h3>",
-      choices:['GO!'],
-      // button_html: '<button class="jspsych-btn" style = "fontsize:30">%choice%</button>',
+      prompt: "<h3>Welcome to the experiment. This is what you need to do.</h3><h3>If you get it, click on the button to practice.</h3>",
+      choices:['Practice!'],
+      button_html: button_format,
     };
 
     let message2 = {
       type: jsPsychHtmlButtonResponse,
-      stimulus: "Perfect! Let's make it a little harder.",
-      choices:['GO!']
+      stimulus: "<h3>Perfect! Let's make it a little harder.</h3>",
+      choices:['Practice again!'],
+      button_html: button_format,
     };
 
 
@@ -77,16 +101,17 @@
       // stimulus: "Great! Now you are ready for the real deal.\nThere will be 5 puzzles.\nGood luck!",
       stimulus: function(){
         let pervious_completion_time = jsPsych.data.get().last().select('rt').mean()/1000;
-        return "<h3>Well done! You finished this last round in "+pervious_completion_time.toFixed(2)+" seconds. Not bad, but can you do better?</h3>" +
-               "<h3>You are now ready for the real deal! There will be 5 puzzles. Will you be the fastest?</h3>"
+        return "<h3>Well done! You finished this last practice round in "+pervious_completion_time.toFixed(2)+" seconds. Not bad, but surely you can do better!</h3>" +
+               "<h3>You are now ready for the real deal! There will be 5 rounds.</h3>" + 
+               "<h3>Will you be the fastest?</h3>"
       },
-      choices:['GO!'],
-      // button_html: '<button class="jspsych-btn">%choice%</button>',
+      choices:['Start Experiment!'],
+      button_html: button_format,
     };
 
     let message4 = {
       type: jsPsychHtmlKeyboardResponse,
-      stimulus: "Nice, here's the next one!",
+      stimulus: "<h3>Nice, here's the next one!</h3>",
       trial_duration:500,
       choices:"NO_KEYS",
     };
@@ -100,15 +125,19 @@
         let max_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').max()/1000;
         let total_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').sum()/1000;
 
-        return "<p>Well done! That was all!</p><h3>Your overall time was: "+total_completion_time.toFixed(2)+" s.</h3><p>Your average completion time was: "+avg_completion_time.toFixed(2)+" s.</p><p>Your quickest time was: "+min_completion_time.toFixed(2)+" s.</p>"
+        return "<h2>Well done! That was all!</h2>"+
+               "<h3>Your TOTAL time was: "+total_completion_time.toFixed(2)+" s.</h3>"+
+               "<h3>Your average time per ROUND was: "+avg_completion_time.toFixed(2)+" s.</h3>"+
+               "<h3>Your QUICKEST time was: "+min_completion_time.toFixed(2)+" s.</h3>"
       },
       choices:['Finish'],
+      button_html: button_format,
     };
 
     let survey = {
       type: jsPsychSurveyText,
       questions: [
-        {prompt: 'Enter a nickname for the Leaderboards:', placeholder: '...', rows:1, columns: 50}
+        {prompt: '<h3>Enter a nickname for the Leaderboards:<h3>', placeholder: '...', rows:1, columns: 50}
       ],
       on_finish: function(data){
         // console.log( data.response.Q0)
@@ -121,7 +150,34 @@
       }
     };
 
+    // countdown trials
+    let countdown_3  = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>3</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    };
+
+    let countdown_2 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>2</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    }; 
+    let countdown_1 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>1</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    }; 
     
+    let countdown_go = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>GO!</h1>",
+      trial_duration: 200,
+      choices:"NO_KEYS",
+    }; 
+
     // 12 colors
     const twenty_colors_HUSL = [
     'rgb(247, 113, 137)',
@@ -256,13 +312,14 @@
     
     /*set up experiment structure*/
     const timeline = [];
+    timeline.push(enter_fullscreen,preload_trial)
     timeline.push(survey);
     timeline.push(message1);
     timeline.push( createCopyTaskTrial('practice', false, '') );
     timeline.push(message2);
     timeline.push(createCopyTaskTrial('practice', true, ''));
     timeline.push(message3)
-
+    timeline.push(countdown_3, countdown_2, countdown_1, countdown_go)
     timeline.push(createCopyTaskTrial('test', true, '<h3>Round 1</h3>')); // 1
     timeline.push(message4)
     timeline.push(createCopyTaskTrial('test', true, '<h3>Round 2</h3>')); // 2
@@ -272,7 +329,7 @@
     timeline.push(createCopyTaskTrial('test', true, '<h3>Round 4</h3>')); // 4
     timeline.push(message4)
     timeline.push(createCopyTaskTrial('test', true, '<h3>Round 5</h3>'));// 5
-    timeline.push(message5)
+    timeline.push(message5, exit_fullscreen)
     // timeline.push(save_data)
 
     /*start experiment*/
