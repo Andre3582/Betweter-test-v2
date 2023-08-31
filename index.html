@@ -18,14 +18,18 @@
     <script src="https://unpkg.com/fabric@5.2.4/dist/fabric.js"></script>
 
     <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    
+    <!--
     <style>
-      body {background-color: #ffffff; color: rgb(0, 0, 0);}
+      body {background-color: #000000; color: rgb(255, 255, 255);}
     </style>
+    -->
 
   </head>
   <body></body>
   <script>
-
+    
+ 
     // Set the canvas size in pixel
     const canvas_width_px = 1200;
 
@@ -39,6 +43,27 @@
     const canvas_width_cm = 25;
 
     const button_format = '<button class="jspsych-btn" style = "font-size:30px; padding: 3px 20px; background-color:rgb(240,240,240)">%choice%</button>'
+
+    // set the theme
+
+    const exp_theme = 'light' // either 'light' or 'dark'
+
+
+    let bg_col, fg_col;
+    if (exp_theme == 'dark'){
+      bg_col = 'black';
+      fg_col = 'white';
+    } 
+    if (exp_theme == 'light'){
+      bg_col = 'white'
+      fg_col = 'black'
+    } 
+    let instruction_image = `Instructions copy task at Betweter (${exp_theme} theme).png`;
+    document.head.innerHTML += `
+      <style>
+        body {background-color: ${bg_col}; color: ${fg_col};}
+      </style>
+      `
 
 
 
@@ -59,7 +84,7 @@
 
     let preload_trial = {
       type: jsPsychPreload,
-      images:['Instructions copy task at Betweter.png'],
+      images:[instruction_image],
     };
 
     let enter_fullscreen = {
@@ -78,11 +103,11 @@
     }
 
 
-
+    console.log(instruction_image)
     let message1 = {
       type: jsPsychImageButtonResponse,
-      stimulus: "Instructions copy task at Betweter.png",
-      stimulus_width: 1200,
+      stimulus: instruction_image,
+      stimulus_width: 1400,
       prompt: "<h3>Welcome to the experiment. This is what you need to do.</h3><h3>If you get it, click on the button to practice.</h3>",
       choices:['Practice!'],
       button_html: button_format,
@@ -278,7 +303,7 @@
     let createCopyTaskTrial = function(test_or_practice, enable_covers, prompt){
       let n_rows = 4
       let n_cols = 4
-      let n_model_items = 2
+      let n_model_items = 6
       let resource_grid_contents = createResourceGrid(n_rows, n_cols)
       let model_grid_contents = createModelGrid(resource_grid_contents, n_rows, n_cols, n_model_items)
 
@@ -288,6 +313,9 @@
           model_grid_contents: model_grid_contents,
           resource_grid_contents: resource_grid_contents,
           prompt: prompt,
+          grid_colors:[fg_col, fg_col, fg_col,],
+          canvas_color: bg_col,
+          mid_border_specs:{width: 0.17,left: 0.35,color: bg_col, },
           item_file_type:'svg_path',                       // NOTE THIS PARAMETER
           data: { 
             trial_label: 'copying_task',
