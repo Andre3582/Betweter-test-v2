@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Copying Task at Betweter</title>
+    <script src="https://unpkg.com/jspsych@7.3.3"></script>
+
+
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.0"></script>    
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.3.0"></script>
+    
+    <script src="plugin-copying-task.js"></script> <!-- local file! -->
+    
+    <script src="https://unpkg.com/fabric@5.2.4/dist/fabric.js"></script>
+
+    <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    
+    <!--
+    <style>
+      body {background-color: #000000; color: rgb(255, 255, 255);}
+    </style>
+    -->
+
+  </head>
+  <body></body>
+  <script>
+    
+ 
+    // Set the canvas size in pixel
+    const canvas_width_px = 1200;
+
+    // Set sizes and speeds relative to the canvas size
+    const aperture_size_model_px       = canvas_width_px            * 0.09;
+    const aperture_size_workspace_px   = canvas_width_px            * 0.09;
+    const aperture_gauss_model_px      = aperture_size_model_px     * 0.5;
+    const aperture_gauss_workspace_px  = aperture_size_workspace_px * 0.5;
+
+    // Set the desired physical size of the canvas width
+    const canvas_width_cm = 25;
+
+    const button_format = '<button class="jspsych-btn" style = "font-size:30px; padding: 3px 20px; background-color:rgb(240,240,240)">%choice%</button>'
+
+    // set the theme
+
+    const exp_theme = 'dark' // either 'light' or 'dark'
+
+
+    let bg_col, fg_col;
+    if (exp_theme == 'dark'){
+      bg_col = 'black';
+      fg_col = 'white';
+    } 
+    if (exp_theme == 'light'){
+      bg_col = 'white'
+      fg_col = 'black'
+    } 
+    let instruction_image = `Instructions copy task at Betweter (${exp_theme} theme).png`;
+    document.head.innerHTML += `
+      <style>
+        body {background-color: ${bg_col}; color: ${fg_col};}
+      </style>
+      `
+
+
+
+    const jsPsych = initJsPsych({
+
+      on_finish: function() {
+
+        // let nickname = typeof(jsPsych.data.get().filter({trial_type: 'survey-text'}).select('response').values[0]) == 'undefined' ? 'default' : jsPsych.data.get().filter({trial_type: 'survey-text'}).select('response').values[0].Q0;
+        // let randid = jsPsych.randomization.randomID(15);;
+        // let filename = nickname + '_' + randid + '.csv'
+
+        // jsPsych.data.addProperties({subject: randid})
+        let filename = jsPsych.data.get().select('filename').values[0]
+        // jsPsych.data.get().localSave('csv', filename)
+        jsPsych.data.displayData();
+      }
+    });
+
+    let preload_trial = {
+      type: jsPsychPreload,
+      images:[instruction_image],
+    };
+
+    let enter_fullscreen = {
+      type: jsPsychFullscreen,
+      message: "<h2>We need to switch to FULLSCREEN before we begin.</h2>",
+      fullscreen_mode: true,
+      delay_after:0,
+      button_label: "Switch to FULLSCREEN",
+      trial_duration:10,
+    };
+
+    let exit_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: false,
+      delay_after: 0
+    }
+
+
+    console.log(instruction_image)
+    let message1 = {
+      type: jsPsychImageButtonResponse,
+      stimulus: instruction_image,
+      stimulus_width: 1400,
+      prompt: "<h3>Welcome to the experiment. This is what you need to do.</h3><h3>If you get it, click on the button to practice.</h3>",
+      choices:['Practice!'],
+      button_html: button_format,
+    };
+
+    let message2 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: "<h3>Perfect! Let's make it a little harder.</h3>",
+      choices:['Practice again!'],
+      button_html: button_format,
+    };
+
+
+    let message3 = {
+      type: jsPsychHtmlButtonResponse,
+      // stimulus: "Great! Now you are ready for the real deal.\nThere will be 5 puzzles.\nGood luck!",
+      stimulus: function(){
+        let pervious_completion_time = jsPsych.data.get().last().select('rt').mean()/1000;
+        return "<h3>Well done! You finished this last practice round in "+pervious_completion_time.toFixed(2)+" seconds. Not bad, but surely you can do better!</h3>" +
+               "<h3>You are now ready for the real deal! There will be 5 rounds.</h3>" + 
+               "<h3>Will you be the fastest?</h3>"
+      },
+      choices:['Start Experiment!'],
+      button_html: button_format,
+    };
+
+    let message4 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h3>Nice, here's the next one!</h3>",
+      trial_duration:500,
+      choices:"NO_KEYS",
+    };
+
+
+    let message5 = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function(){
+        let avg_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').mean()/1000;
+        let min_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').min()/1000;
+        let max_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').max()/1000;
+        let total_completion_time = jsPsych.data.get().filter({"test_or_practice":'test'}).select('rt').sum()/1000;
+
+        return "<h2>Well done! That was all!</h2>"+
+               "<h3>Your TOTAL time was: "+total_completion_time.toFixed(2)+" s.</h3>"+
+               "<h3>Your average time per ROUND was: "+avg_completion_time.toFixed(2)+" s.</h3>"+
+               "<h3>Your QUICKEST time was: "+min_completion_time.toFixed(2)+" s.</h3>"
+      },
+      choices:['Finish'],
+      button_html: button_format,
+    };
+
+    let survey = {
+      type: jsPsychSurveyText,
+      questions: [
+        {prompt: '<h3>Enter a nickname for the Leaderboards:<h3>', placeholder: '...', rows:1, columns: 50}
+      ],
+      on_finish: function(data){
+        // console.log( data.response.Q0)
+        let nickname = data.response.Q0;
+        let randid = jsPsych.randomization.randomID(15);;
+        let filename = nickname + '_' + randid + '.csv'
+
+        jsPsych.data.addProperties({subject: randid})
+        jsPsych.data.addProperties({filename: filename})
+      }
+    };
+
+    // countdown trials
+    let countdown_3  = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>3</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    };
+
+    let countdown_2 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>2</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    }; 
+    let countdown_1 = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>1</h1>",
+      trial_duration:1000,
+      choices:"NO_KEYS",
+    }; 
+    
+    let countdown_go = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "<h1>GO!</h1>",
+      trial_duration: 200,
+      choices:"NO_KEYS",
+    }; 
+
+    // 12 colors
+    const twenty_colors_HUSL = [
+    'rgb(247, 113, 137)',
+    'rgb(247, 117, 79 )',
+    'rgb(220, 137, 50 )',
+    'rgb(195, 149, 50 )',
+    'rgb(174, 157, 49 )',
+    'rgb(151, 164, 49 )',
+    'rgb(119, 171, 49 )',
+    'rgb(49,  179, 62 )',
+    'rgb(51,  176, 122)',
+    'rgb(53,  174, 147)',
+    'rgb(54,  173, 164)',
+    'rgb(55,  171, 180)',
+    'rgb(56,  169, 197)',
+    'rgb(58,  165, 223)',
+    'rgb(110, 155, 244)',
+    'rgb(164, 140, 244)',
+    'rgb(204, 122, 244)',
+    'rgb(244, 92,  242)',
+    'rgb(245, 101, 204)',
+    'rgb(246, 107, 173)'
+    ]
+
+    let createResourceGrid = function (n_rows, n_cols) {
+      // this function creates an array that fills the resource grid with items. The items in each row
+      // have the same color, and items in each colum have the same shape
+      // it returns an with with item paths.
+      // An item path is a string that looks something like this:
+      //       "3--rgb(53,  174, 147)" 
+      //      "16--rgb(246, 107, 173)"
+      // the frist character(s) are the index of the shape, followed by two dashes, followed by a 18 characters for the color.
+      // This function thus returns an array like this: ["3--rgb(53,  174, 147)", "3--rgb(246, 107, 173)", ..., "16--rgb(246, 107, 173)"]
+      
+      
+      let color_tags = []; // empty array to store the chosen color tags
+      
+      let indices = [] // create an array from 0 to 19: indices = [0, 1, ...,18, 19];
+      for (let i=0; i<20; i++){
+        indices.push(i)
+      }
+
+
+      // assuring no two colors have distance 1 from each other
+      for (let i=0; i < n_cols; i++){
+          
+          let sampled_index = jsPsych.randomization.sampleWithReplacement(indices, 1)[0]; // NB: add [0] to get the value, the jsPsych.randomization.sampleWithReplacement() always returs an array!
+          
+          color_tags.push(twenty_colors_HUSL[ sampled_index ])
+
+          indices = removeItemFromArray(indices, ( (sampled_index -2)%20 )  );
+          indices = removeItemFromArray(indices, ( (sampled_index -1)%20 )  );
+          indices = removeItemFromArray(indices, sampled_index);
+          indices = removeItemFromArray(indices, ( (sampled_index +1)%20 ) );
+          indices = removeItemFromArray(indices, ( (sampled_index +2)%20 ) );
+      }
+
+      let twenty_shapes = []
+      for (let i=0; i<20; i++){
+        twenty_shapes.push(i)
+      }
+    
+      let shape_paths = jsPsych.randomization.sampleWithoutReplacement(twenty_shapes, n_rows);
+      
+      let resource_grid = []
+
+      // populate grid with items
+      for (var c_i=0; c_i < color_tags.length; c_i++){
+        resource_grid[c_i] = [];
+        for (var s_i=0; s_i < shape_paths.length ; s_i++) {
+          resource_grid[c_i][s_i] = shape_paths[s_i] + '--'+ color_tags[c_i] 
+        }
+      }
+      return resource_grid
+    } 
+
+    let createModelGrid = function(resource_grid, n_rows, n_cols, n_model_items) {
+      let selected_model_items = jsPsych.randomization.sampleWithReplacement(resource_grid.flat(), n_model_items);
+      let selected_model_grid_indices = jsPsych.randomization.sampleWithoutReplacement([...Array((n_rows*n_cols)).keys()], n_model_items)
+
+      let model_grid_contents = []
+    
+      for (let r=0;r<n_rows;r++){    
+          model_grid_contents[r] = []
+          for (let c=0; c<n_cols; c++){
+              let index = r*n_cols + c 
+              if (selected_model_grid_indices.includes(index)) {
+                  model_grid_contents[r][c] = selected_model_items.pop()
+              } else {
+                  model_grid_contents[r][c] = null
+              }
+          }
+      }
+      return model_grid_contents
+    }
+  
+
+    let createCopyTaskTrial = function(test_or_practice, enable_covers, prompt){
+      let n_rows = 4
+      let n_cols = 4
+      let n_model_items = 6
+      let resource_grid_contents = createResourceGrid(n_rows, n_cols)
+      let model_grid_contents = createModelGrid(resource_grid_contents, n_rows, n_cols, n_model_items)
+
+      // copying task with stimuli adapted from Arnoult (1955) (https://doi.org/10.1037/h0044049)
+      let copying_task = {
+          type: jsPsychCopyingTask,
+          model_grid_contents: model_grid_contents,
+          resource_grid_contents: resource_grid_contents,
+          prompt: prompt,
+          grid_colors:[fg_col, fg_col, fg_col,],
+          canvas_color: bg_col,
+          mid_border_specs:{width: 0.17,left: 0.35,color: bg_col, },
+          item_file_type:'svg_path',                       // NOTE THIS PARAMETER
+          data: { 
+            trial_label: 'copying_task',
+            test_or_practice: test_or_practice,
+          },
+          enable_covers: enable_covers,
+      }
+      return copying_task
+    }
+
+    // save data to datapipe
+    const save_data = {
+      type: jsPsychPipe,
+      action: "save",
+      experiment_id: "y8YaWcxj58sZ",
+      filename: function() {
+        console.log(jsPsych.data.get().select('filename').values[0])
+        return jsPsych.data.get().select('filename').values[0]},
+      data_string: ()=>jsPsych.data.get().csv()
+    };
+
+    
+    /*set up experiment structure*/
+    const timeline = [];
+    timeline.push(enter_fullscreen,preload_trial)
+    timeline.push(survey);
+    timeline.push(message1);
+    timeline.push( createCopyTaskTrial('practice', false, '') );
+    timeline.push(message2);
+    timeline.push(createCopyTaskTrial('practice', true, ''));
+    timeline.push(message3)
+    timeline.push(countdown_3, countdown_2, countdown_1, countdown_go)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 1</h3>')); // 1
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 2</h3>')); // 2
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 3</h3>')); // 3
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 4</h3>')); // 4
+    timeline.push(message4)
+    timeline.push(createCopyTaskTrial('test', true, '<h3>Round 5</h3>'));// 5
+    timeline.push(message5, exit_fullscreen)
+    // timeline.push(save_data)
+
+    /*start experiment*/
+    jsPsych.run(timeline);
+
+    function removeItemFromArray(array, element_to_be_removed){ // returns an array WITHOUT the given element. If element is not in the array, the same array is returned.
+      var new_array = [];
+      for (var i=0; i<array.length; i++){
+          new_array.push(array[i])
+      }
+      
+      var index = new_array.indexOf(element_to_be_removed)
+      if (index == -1){
+          return new_array
+      } else {
+          new_array.splice(index, 1) // removes 1 item starting at index
+          return new_array;
+      }
+    }
+    
+  </script>
+</html>
