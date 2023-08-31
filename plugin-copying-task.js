@@ -71,6 +71,13 @@ var jsPsychCopyingTask = (function (jspsych) {
         description:
           "The colors of the grids as such [model color, workspace color, resource color] ",
       },
+      cover_colors: {
+        type: jspsych.ParameterType.HTML_STRING,
+        pretty_name: "Grid Colors",
+        default: {mdl:'rgb(220,220,220)', wsp:'rgb(220,220,220)', rsc:'rgb(220,220,220)'},
+        description:
+          "The colors of the grids as such [model color, workspace color, resource color] ",
+      },
       prompt: {
         type: jspsych.ParameterType.HTML_STRING,
         pretty_name: "Prompt",
@@ -420,7 +427,7 @@ var jsPsychCopyingTask = (function (jspsych) {
 
         // Model cover
         let mdl_cover_board = new fabric.Rect({
-          fill: 'rgb(220, 220, 220)',
+          fill: trial.cover_colors.mdl,
           top: mdl_grid_top,
           left: mdl_grid_left,
           width: n_model_cols * grid_box_size, 
@@ -433,8 +440,9 @@ var jsPsychCopyingTask = (function (jspsych) {
           originX: 'center',
           originY: 'center',
           top: mdl_grid_top + mdl_cover_board.height/2, 
-          fontSize: (canvas_width/65),
-          fontFamily: 'Arial',
+          fontSize: (canvas_width/65), 
+          fontFamily: 'Open Sans',
+          fontStyle: 'bold',
           textAlign: 'center' 
         });
 
@@ -449,17 +457,16 @@ var jsPsychCopyingTask = (function (jspsych) {
 
         canvas.add(mdl_cover);
 
-
         // workspace cover
         let wsp_cover_board = new fabric.Rect({
           fill: 'rgb(220, 220, 220)',
-          top: wsp_grid_top,
+          top: trial.cover_colors.wsp,
           left: wsp_grid_left,
           width: n_model_cols * grid_box_size, 
           height: n_model_rows * grid_box_size, 
         })
-        let rcs_cover_board = new fabric.Rect({
-          fill: 'rgb(220, 220, 220)',
+        let rsc_cover_board = new fabric.Rect({
+          fill: trial.cover_colors.rsc,
           top: rsc_grid_top,
           left: rsc_grid_left,
           width: n_resource_cols * grid_box_size,  
@@ -470,12 +477,13 @@ var jsPsychCopyingTask = (function (jspsych) {
           originX: 'center',
           originY: 'center',
           top: wsp_grid_top + wsp_cover_board.height/2, 
-          fontSize: (canvas_width/65),
-          fontFamily: 'Arial',
+          fontSize: (canvas_width/65), 
+          fontFamily: 'Open Sans',
+          fontStyle: 'bold',
           textAlign: 'center' 
         });
 
-        let wsp_cover = new fabric.Group([wsp_cover_board, rcs_cover_board, wsp_cover_text])
+        let wsp_cover = new fabric.Group([wsp_cover_board, rsc_cover_board, wsp_cover_text])
 
         // get original loc
         const init_wsp_cover_left = wsp_cover.left
